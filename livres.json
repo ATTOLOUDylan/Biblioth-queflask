@@ -1,0 +1,14 @@
+[
+    {
+        "titre": "python",
+        "auteur": "Dylan",
+        "année": "2025",
+        "disponible": true
+    },
+    {
+        "titre": "php",
+        "auteur": "daryl",
+        "année": "2025",
+        "disponible": true
+    }
+]
