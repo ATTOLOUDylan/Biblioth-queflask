@@ -63,5 +63,5 @@ bibliotheque/
 ## 📜 Licence
 
 Ce projet est sous licence MIT.  
-📄 [Voir la licence complète ici](./LICENSE)
+📄 [Voir la licence complète ici](./LICENCE)
 
