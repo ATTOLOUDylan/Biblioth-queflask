@@ -62,5 +62,6 @@ bibliotheque/
 
 ## 📜 Licence
 
-Ce projet est libre de droits. Tu peux le copier, modifier et réutiliser à volonté.
+Ce projet est sous licence MIT.  
+📄 [Voir la licence complète ici](./LICENSE)
 
