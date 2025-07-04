@@ -4,5 +4,11 @@
         "email": "dylan@gmail.com",
         "pwd": "dylan2005",
         "emprunts": []
+    },
+    {
+        "nom": "ADMIN",
+        "email": "Admin@gmail.com",
+        "pwd": "admin2005",
+        "emprunts": []
     }
 ]

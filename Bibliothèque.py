@@ -1,7 +1,7 @@
 import json
 import os
 from livre import charger_livres, sauvegarder_livres, ajouter_livre, lister_livres, rechercher_livre
-from utilisateur import charger_util, sauvegarder_util, ajouter_util, connec_util
+from utilisateur import charger_util, sauvegarder_util, ajouter_util, connec_util,changer_mot_de_passe
 from compte import compte
 
 def menu():
@@ -17,7 +17,8 @@ def menu():
 3. Rechercher un livre
 4. S'inscrire
 5. Se connecter
-6. Quitter
+6. Changer Mot de Passe
+7. Quitter
 NB: Pour emprunter un livre, connectez-vous
 """)
         choix = input("Votre choix : ")
@@ -35,8 +36,6 @@ NB: Pour emprunter un livre, connectez-vous
         elif choix == "4":
             ajouter_util(utilisateurs)
             sauvegarder_util(utilisateurs)
-            print("Inscription réussie")
-
         elif choix == "5":
             utilisateur_connecte = connec_util(utilisateurs)
             if utilisateur_connecte:
@@ -44,8 +43,10 @@ NB: Pour emprunter un livre, connectez-vous
                 compte(utilisateur_connecte, utilisateurs, livres)
             else:
                 print("Échec de la connexion.")
-
         elif choix == "6":
+            changer_mot_de_passe(utilisateurs)
+            sauvegarder_util(utilisateurs)
+        elif choix == "7":
             sauvegarder_livres(livres)
             sauvegarder_util(utilisateurs)
             print("📦 Bibliothèque sauvegardée. Au revoir !")

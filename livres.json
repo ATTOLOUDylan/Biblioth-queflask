@@ -3,12 +3,12 @@
         "titre": "python",
         "auteur": "Dylan",
         "année": "2025",
-        "disponible": true
+        "quantite": 2
     },
     {
-        "titre": "php",
-        "auteur": "daryl",
+        "titre": "python",
+        "auteur": "Dylan",
         "année": "2025",
-        "disponible": true
+        "quantite": 4
     }
 ]
