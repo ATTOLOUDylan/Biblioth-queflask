@@ -32,13 +32,19 @@ bibliotheque/
 
 ---
 
-## ▶️ Lancer le programme
+## ▶️ Comment exécuter l'application
 
-Depuis un terminal :
-
+1. Ouvre un terminal.
+2. Va dans le dossier du projet avec :
 ```bash
-python3 bibliothèque.py
----
+   cd chemin/vers/le/dossier/bibliotheque 
+    
+   python3 bibliothèque.py
+   
+   EX: dylan@dylan-Latitude-E5540:~$ cd bibliothèque
+       dylan@dylan-Latitude-E5540:~/bibliothèque$ python3 bibliothèque.py
+   📝 Assure-toi d’avoir Python 3.x installé sur ton ordinateur
+  ---
 ```
 ## 🔧 Technologies utilisées
 
