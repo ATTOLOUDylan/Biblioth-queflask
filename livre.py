@@ -1,101 +1,103 @@
-import json
-import os
+import sqlite3
 
-FICHIER_LIVRES = "livres.json"
+# ───── AJOUTER UN LIVRE ─────
+def ajouter_livre():
+    titre = input("Titre : ").strip()
+    auteur = input("Auteur : ").strip()
+    annee = input("Année : ").strip()
+    quantite = int(input("Nombre d'exemplaires : "))
 
-def charger_livres():
-    if os.path.exists(FICHIER_LIVRES):
-        with open(FICHIER_LIVRES, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO livres (titre, auteur, annee, exemplaires)
+        VALUES (?, ?, ?, ?)
+    """, (titre, auteur, annee, quantite))
 
-def sauvegarder_livres(livres):
-    with open(FICHIER_LIVRES, "w", encoding="utf-8") as f:
-        json.dump(livres, f, indent=4, ensure_ascii=False)
+    conn.commit()
+    conn.close()
+    print(f"✅ Livre '{titre}' ajouté avec succès ({quantite} exemplaires).")
 
-def ajouter_livre(livres):
-    nom = input("Nom utilisateur : ").lower()
-    pwd = input("Mot de passe : ").lower()
+# ───── LISTER LES LIVRES ─────
+def lister_livres():
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    cur.execute("SELECT id, titre, auteur, annee, exemplaires FROM livres")
+    livres = cur.fetchall()
+    conn.close()
 
-    if nom == "admin" and pwd == "admin2005":
-        titre = input("Titre du livre : ").strip()
-        auteur = input("Auteur : ").strip()
-        annee = input("Année de publication : ").strip()
-        quantite = int(input("Nombre d'exemplaires : ").strip())
-
-        livre = {
-            "titre": titre,
-            "auteur": auteur,
-            "année": annee,
-            "quantite": quantite
-        }
-
-        livres.append(livre)
-        print(f"Livre '{titre}' ajouté ({quantite} exemplaires).")
-    else:
-        print("❌ Accès refusé.")
-
-
-def lister_livres(livres):
     if not livres:
-        print("Aucun livre dans la bibliothèque.")
-        return
-    print("\nListe des livres :")
-    for i, livre in enumerate(livres, 1):
-        dispo = "Oui" if livre["disponible"] else "Non"
-        print(f"{i}. {livre['titre']} - {livre['auteur']} ({livre['année']}) | Disponible : {dispo}")
-
-def rechercher_livre(livres):
-    mot = input("Mot-clé (titre ou auteur) : ").strip().lower()
-    resultats = [l for l in livres if mot in l["titre"].lower() or mot in l["auteur"].lower()]
-    if not resultats:
-        print("Aucun livre trouvé.")
+        print("📭 Aucun livre disponible.")
     else:
-        print("\nRésultats de la recherche :")
-        for livre in resultats:
-            dispo = "Oui" if livre["disponible"] else "Non"
-            print(f"- {livre['titre']} - {livre['auteur']} ({livre['année']}) | Disponible : {dispo}")
+        for l in livres:
+            print(f"{l[0]}. {l[1]} - {l[2]} ({l[3]}) | Exemplaires : {l[4]}")
 
-def rendre_livre(utilisateurs, livres, utilisateur_connecte):
-    emprunts = utilisateur_connecte.get("emprunts", [])
+# ───── RECHERCHER UN LIVRE ─────
+def rechercher_livre():
+    mot = input("Mot-clé (titre ou auteur) : ").strip().lower()
+
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT id, titre, auteur, annee, exemplaires
+        FROM livres
+        WHERE LOWER(titre) LIKE ? OR LOWER(auteur) LIKE ?
+    """, (f"%{mot}%", f"%{mot}%"))
+    resultats = cur.fetchall()
+    conn.close()
+
+    if not resultats:
+        print("❌ Aucun livre trouvé.")
+    else:
+        print("\n🔍 Résultats de la recherche :")
+        for l in resultats:
+            print(f"{l[0]}. {l[1]} - {l[2]} ({l[3]}) | Exemplaires : {l[4]}")
+
+# ───── RENDRE UN LIVRE ─────
+def rendre_livre(utilisateur_email):
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+
+    # Récupérer les livres empruntés par l'utilisateur
+    cur.execute("""
+        SELECT e.id, l.titre
+        FROM emprunts e
+        JOIN livres l ON e.livre_id = l.id
+        WHERE e.utilisateur_email = ?
+    """, (utilisateur_email,))
+    emprunts = cur.fetchall()
 
     if not emprunts:
         print("📭 Vous n'avez emprunté aucun livre.")
+        conn.close()
         return
 
     print("\n📦 Vos livres empruntés :")
-    for i, titre in enumerate(emprunts, 1):
-        print(f"{i}. {titre}")
+    for i, (emprunt_id, titre) in enumerate(emprunts, 1):
+        print(f"{i}. {titre} (emprunt ID : {emprunt_id})")
 
-    choix = input("Entrez le **numéro** ou le **titre** du livre à rendre : ").strip()
-
-    titre_rendu = None
-
-    # Si l'utilisateur donne un numéro
-    if choix.isdigit():
-        index = int(choix) - 1
-        if 0 <= index < len(emprunts):
-            titre_rendu = emprunts[index]
-    else:
-        # Sinon, il tape le titre
-        for t in emprunts:
-            if t.lower() == choix.lower():
-                titre_rendu = t
-                break
-
-    if not titre_rendu:
-        print("❌ Livre non trouvé dans vos emprunts.")
+    choix = input("Entrez le numéro du livre à rendre : ").strip()
+    if not choix.isdigit() or int(choix) < 1 or int(choix) > len(emprunts):
+        print("❌ Choix invalide.")
+        conn.close()
         return
 
-    # Retirer le titre de la liste d'emprunts
-    utilisateur_connecte["emprunts"].remove(titre_rendu)
+    emprunt_id, titre_rendu = emprunts[int(choix) - 1]
 
-    # Augmenter la quantité disponible dans livres.json
-    for livre in livres:
-        if livre["titre"].lower() == titre_rendu.lower():
-            livre["quantite"] = livre.get("quantite", 0) + 1
-            print(f"✅ Livre '{titre_rendu}' rendu avec succès.")
-            return
+    # Récupérer l'ID du livre
+    cur.execute("SELECT livre_id FROM emprunts WHERE id = ?", (emprunt_id,))
+    livre = cur.fetchone()
+    if not livre:
+        print("❌ Erreur : emprunt non trouvé.")
+        conn.close()
+        return
 
-    print("⚠️ Erreur : Livre non trouvé dans la bibliothèque.")
+    livre_id = livre[0]
 
+    # Supprimer l’emprunt et rendre le livre
+    cur.execute("DELETE FROM emprunts WHERE id = ?", (emprunt_id,))
+    cur.execute("UPDATE livres SET exemplaires = exemplaires + 1 WHERE id = ?", (livre_id,))
+
+    conn.commit()
+    conn.close()
+    print(f"✅ Livre '{titre_rendu}' rendu avec succès.")

@@ -1,21 +1,9 @@
-import json
-import os
+import sqlite3
+import re
 from getpass import getpass
 
-FICHIER_UTIL = "utilisateur.json"
-
-def charger_util():
-    if os.path.exists(FICHIER_UTIL):
-        with open(FICHIER_UTIL, "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
-
-def sauvegarder_util(util):
-    with open(FICHIER_UTIL, "w", encoding="utf-8") as f:
-        json.dump(util, f, indent=4, ensure_ascii=False)
-
+# ───── VALIDATION EMAIL ─────
 def email_valide(email):
-    """Vérifie si l'email est valide avec des règles simples."""
     if "@" not in email or "." not in email:
         return False
     if email.count("@") != 1:
@@ -29,36 +17,25 @@ def email_valide(email):
         return False
     return True
 
-import re
-
+# ───── EVALUATION MOT DE PASSE ─────
 def evaluer_mot_de_passe(pwd):
     niveau = 0
     remarques = []
 
-    if len(pwd) >= 8:
-        niveau += 1
-    else:
-        remarques.append("🔸 Mot de passe trop court (minimum 8 caractères)")
+    if len(pwd) >= 8: niveau += 1
+    else: remarques.append("🔸 Mot de passe trop court (minimum 8 caractères)")
 
-    if re.search(r"[a-z]", pwd):
-        niveau += 1
-    else:
-        remarques.append("🔸 Ajouter des lettres minuscules")
+    if re.search(r"[a-z]", pwd): niveau += 1
+    else: remarques.append("🔸 Ajouter des lettres minuscules")
 
-    if re.search(r"[A-Z]", pwd):
-        niveau += 1
-    else:
-        remarques.append("🔸 Ajouter des lettres majuscules")
+    if re.search(r"[A-Z]", pwd): niveau += 1
+    else: remarques.append("🔸 Ajouter des lettres majuscules")
 
-    if re.search(r"[0-9]", pwd):
-        niveau += 1
-    else:
-        remarques.append("🔸 Ajouter des chiffres")
+    if re.search(r"[0-9]", pwd): niveau += 1
+    else: remarques.append("🔸 Ajouter des chiffres")
 
-    if re.search(r"[^a-zA-Z0-9]", pwd):
-        niveau += 1
-    else:
-        remarques.append("🔸 Ajouter un caractère spécial (ex: @, #, !, ?)")
+    if re.search(r"[^a-zA-Z0-9]", pwd): niveau += 1
+    else: remarques.append("🔸 Ajouter un caractère spécial (ex: @, #, !, ?)")
 
     niveaux = {
         1: "🟥 Faible",
@@ -71,27 +48,23 @@ def evaluer_mot_de_passe(pwd):
     print(f"\n🔐 Niveau de sécurité du mot de passe : {niveaux[niveau]}")
     for r in remarques:
         print(r)
-    
+
     return niveau
 
-def ajouter_util(util):
-    nom = input("Nom utilisateur : ")
-    email = input("Votre email : ")
+# ───── INSCRIPTION UTILISATEUR ─────
+def ajouter_utilisateur():
+    nom = input("Nom utilisateur : ").strip()
+    email = input("Votre email : ").strip()
 
     if not email_valide(email):
         print("❌ Email invalide.")
         return
 
-    for user in util:
-        if user["email"].lower() == email.lower():
-            print("Cet email est déjà inscrit.")
-            return
-
     pwd = getpass("Votre mot de passe : ")
     niveau = evaluer_mot_de_passe(pwd)
 
     if niveau < 3:
-        print("❗️Mot de passe trop faible. Veuillez en choisir un plus sécurisé.")
+        print("❗️Mot de passe trop faible.")
         return
 
     pwd2 = getpass("Confirmer votre mot de passe : ")
@@ -99,90 +72,138 @@ def ajouter_util(util):
         print("❌ Les mots de passe ne correspondent pas.")
         return
 
-    utils = {"nom": nom, "email": email, "pwd": pwd, "emprunts": []}
-    util.append(utils)
-    print(f"✅ Utilisateur '{nom}' ajouté avec succès.")
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    try:
+        cur.execute("""
+          INSERT INTO utilisateurs (nom, email, mot_de_passe, is_admin)
+          VALUES (?, ?, ?, 0)
+          """, (nom, email, pwd))
+        conn.commit()
+        print(f"✅ Utilisateur '{nom}' ajouté avec succès.")
+    except sqlite3.IntegrityError:
+        print("❌ Cet email est déjà inscrit.")
+    conn.close()
+
+# ───── CONNEXION UTILISATEUR ─────
+def connexion_utilisateur():
+    email = input("Email : ").strip().lower()
+    mot_de_passe = getpass("Mot de passe : ").strip()
+
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT nom, email, is_admin 
+        FROM utilisateurs 
+        WHERE email = ? AND mot_de_passe = ?
+    """, (email, mot_de_passe))
+    user = cur.fetchone()
+    conn.close()
+
+    if user:
+        print(f"✅ Connexion réussie. Bienvenue {user[0]} !")
+        return {
+            "nom": user[0],
+            "email": user[1],
+            "is_admin": bool(user[2])  # <= Très important !
+        }
+    else:
+        print("❌ Email ou mot de passe incorrect.")
+        return None
 
 
-def connec_util(utilisateurs):
-    nom = input("Nom utilisateur : ").lower()
-    pwd = input("Mot de passe : ").lower()
-
-    for user in utilisateurs:
-        if user["nom"].lower() == nom and user["pwd"].lower() == pwd:
-            return user
-    print("Utilisateur ou mot de passe incorrect.")
-    return None
-
-def changer_mot_de_passe(utilisateurs):
+# ───── CHANGER MOT DE PASSE ─────
+def changer_mot_de_passe():
     email = input("Entrez votre email : ").strip().lower()
-    ancien_mdp = input("Entrez votre ancien mot de passe : ").strip()
-    
-    # Trouver l'utilisateur par email
-    utilisateur = None
-    for u in utilisateurs:
-        if u["email"].lower() == email:
-            utilisateur = u
-            break
-    
-    if not utilisateur:
+    ancien_mdp = getpass("Entrez votre ancien mot de passe : ").strip()
+
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
+    cur.execute("SELECT mot_de_passe FROM utilisateurs WHERE email = ?", (email,))
+    user = cur.fetchone()
+
+    if not user:
         print("❌ Utilisateur non trouvé.")
+        conn.close()
         return
-    
-    if utilisateur["pwd"] != ancien_mdp:
+
+    if user[0] != ancien_mdp:
         print("❌ Ancien mot de passe incorrect.")
+        conn.close()
         return
-    
+
     nouveau_mdp = getpass("Entrez votre nouveau mot de passe : ").strip()
     niveau = evaluer_mot_de_passe(nouveau_mdp)
 
     if niveau < 3:
-        print("❗️Mot de passe trop faible. Veuillez en choisir un plus sécurisé.")
+        print("❗️Mot de passe trop faible.")
+        conn.close()
         return
-    
+
     confirmation = getpass("Confirmez votre nouveau mot de passe : ").strip()
-    
+
     if nouveau_mdp != confirmation:
         print("❌ Les mots de passe ne correspondent pas.")
+        conn.close()
         return
-    
-    utilisateur["pwd"] = nouveau_mdp
+
+    cur.execute("UPDATE utilisateurs SET mot_de_passe = ? WHERE email = ?", (nouveau_mdp, email))
+    conn.commit()
+    conn.close()
     print("✅ Mot de passe modifié avec succès.")
+def emprunter_livre(utilisateur_email):
+    conn = sqlite3.connect("bibliotheque.db")
+    cur = conn.cursor()
 
-def emprunter_livre(utilisateurs, livres, utilisateur_connecte):
-    livres_disponibles = [l for l in livres if l.get("quantite", 0) > 0]
+    # Liste des livres disponibles
+    cur.execute("SELECT id, titre, auteur, exemplaires FROM livres WHERE exemplaires > 0")
+    livres = cur.fetchall()
 
-    if not livres_disponibles:
-        print("📭 Aucun livre disponible actuellement.")
+    if not livres:
+        print("📭 Aucun livre disponible.")
+        conn.close()
         return
 
     print("\n📚 Livres disponibles :")
-    for i, livre in enumerate(livres_disponibles, 1):
-        print(f"{i}. {livre['titre']} - {livre['auteur']} (Exemplaires : {livre['quantite']})")
+    for livre in livres:
+        print(f"{livre[0]}. {livre[1]} - {livre[2]} | Exemplaires : {livre[3]}")
 
-    choix = input("Entrez le **numéro** ou le **titre** du livre à emprunter : ").strip()
-
-    livre_choisi = None
-
-    # 📌 Vérifie si le choix est un numéro (ID)
-    if choix.isdigit():
-        index = int(choix) - 1
-        if 0 <= index < len(livres_disponibles):
-            livre_choisi = livres_disponibles[index]
-    else:
-        # 📌 Sinon on cherche par titre
-        for livre in livres_disponibles:
-            if livre["titre"].lower() == choix.lower():
-                livre_choisi = livre
-                break
-
-    if not livre_choisi:
-        print("❌ Livre introuvable ou plus disponible.")
+    choix = input("Entrez l'ID du livre à emprunter : ").strip()
+    if not choix.isdigit():
+        print("❌ Entrée invalide.")
+        conn.close()
         return
 
-    # Ajoute le livre à l'utilisateur
-    utilisateur_connecte["emprunts"].append(livre_choisi["titre"])
-    livre_choisi["quantite"] -= 1
-    print(f"✅ Livre '{livre_choisi['titre']}' emprunté avec succès.")
+    livre_id = int(choix)
+
+    # Vérifier si le livre existe et a des exemplaires
+    cur.execute("SELECT exemplaires FROM livres WHERE id = ?", (livre_id,))
+    result = cur.fetchone()
+
+    if not result:
+        print("❌ Livre introuvable.")
+        conn.close()
+        return
+    elif result[0] <= 0:
+        print("❌ Aucun exemplaire disponible.")
+        conn.close()
+        return
+
+    # Enregistrer l'emprunt
+    cur.execute("""
+        INSERT INTO emprunts (utilisateur_email, livre_id)
+        VALUES (?, ?)
+    """, (utilisateur_email, livre_id))
+
+    # Mettre à jour la table livres
+    cur.execute("""
+        UPDATE livres SET exemplaires = exemplaires - 1 WHERE id = ?
+    """, (livre_id,))
+
+    conn.commit()
+    conn.close()
+    print("✅ Livre emprunté avec succès.")
+
+
 
 
