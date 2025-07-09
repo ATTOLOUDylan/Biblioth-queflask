@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>📚 Livres disponibles</title>
+ <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <div class="mb-4 text-center">
+      <h1>📚 Liste des livres</h1>
+    </div>
+
+    {% if utilisateur %}
+      <p class="alert alert-success">Connecté : <strong>{{ utilisateur.nom }}</strong></p>
+    {% else %}
+      <p class="alert alert-warning">🔐 <a href="/login">Connectez-vous</a> pour emprunter un livre.</p>
+    {% endif %}
+
+    {% if livres %}
+      <ul class="list-group">
+        {% for livre in livres %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ livre[1] }}</strong> — {{ livre[2] }} ({{ livre[3] }})
+              <br>
+              <small class="text-muted">{{ livre[4] }} exemplaire{{ 's' if livre[4] > 1 else '' }}</small>
+            </div>
+
+            {% if utilisateur and livre[4] > 0 %}
+              <form action="{{ url_for('emprunter', livre_id=livre[0]) }}" method="post" class="mb-0">
+                <button type="submit" class="btn btn-sm btn-outline-primary">📥 Emprunter</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="alert alert-info">📭 Aucun livre disponible.</p>
+    {% endif %}
+
+    <div class="mt-4">
+      <a href="/" class="btn btn-secondary">⬅ Retour à l’accueil</a>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS (optionnel) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

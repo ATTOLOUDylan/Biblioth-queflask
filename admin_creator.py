@@ -19,5 +19,3 @@ def creer_admin():
     conn.close()
     print("✅ Admin créé : admin@gmail.com / admin2005")
 
-if __name__ == "__main__":
-    creer_admin()

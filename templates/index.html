@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Accueil - Bibliothèque</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+</head>
+<body class="bg-light">
+
+  <div class="container py-5">
+    <div class="text-center mb-4">
+      <h1 class="display-5">📚 Bibliothèque</h1>
+      <p class="text-muted">Bienvenue dans votre espace de gestion des livres</p>
+    </div>
+
+    {% if utilisateur %}
+      <div class="alert alert-success">
+        Connecté en tant que <strong>{{ utilisateur.nom }}</strong>
+      </div>
+
+      <div class="list-group mb-4">
+        <a href="/profil" class="list-group-item list-group-item-action">👤 Mon profil</a>
+        <a href="/livres" class="list-group-item list-group-item-action">📘 Voir les livres</a>
+        <a href="{{ url_for('mes_emprunts') }}" class="list-group-item list-group-item-action">📖 Mes emprunts</a>
+        <a href="/recherche" class="list-group-item list-group-item-action">🔍 Rechercher un livre</a>
+        {% if utilisateur.is_admin %}
+          <a href="/ajouter" class="list-group-item list-group-item-action text-danger">➕ Ajouter un livre</a>
+        {% endif %}
+        <a href="/logout" class="list-group-item list-group-item-action">🚪 Se déconnecter</a>
+      </div>
+
+    {% else %}
+      <div class="alert alert-warning">
+        Vous n'êtes pas connecté.
+      </div>
+
+      <div class="d-flex gap-3">
+        <a href="/login" class="btn btn-primary">🔐 Se connecter</a>
+        <a href="/signup" class="btn btn-outline-secondary">📝 Créer un compte</a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Bootstrap JS (facultatif pour composants dynamiques) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
