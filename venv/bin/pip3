@@ -1,4 +1,4 @@
-#!/home/dylan/bibliothèque/venv/bin/python3
+#!/home/dylan/Bibliothèque/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
