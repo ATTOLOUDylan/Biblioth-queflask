@@ -54,7 +54,12 @@ cd Bibliotheque
 python3 -m venv venv
 source venv/bin/activate
 ```
-3.**Configurer le fichier .env** :
+3.**Installer les dépendances** :
+```bash
+pip install -r requirements.txt
+
+```
+4.**Configurer le fichier .env** :
 
 Crée un fichier .env à la racine avec ce contenu :
 ```bash
