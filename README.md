@@ -88,4 +88,4 @@ Puis ouvrir http://127.0.0.1:5000 dans un navigateur.
 📄 **Licence**
 
 Ce projet est open-source et publié sous une licence.  
-➡️ Consulte le fichier [`LICENSE`](LICENSE) pour plus de détails.
+➡️ Consulte le fichier [`LICENCE`](LICENSE) pour plus de détails.
