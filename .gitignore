@@ -1,0 +1,13 @@
+# Fichier d’environnement (identifiants secrets)
+.env
+
+# Dossier virtuel Python
+venv/
+
+# Caches Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
