@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, session, url_for
 import mysql.connector
 from datetime import datetime, timedelta
-from app.models.mail import envoyer_email
+from app.models.mail import envoyer_email  # Module personnalisé pour l'envoi d'emails
 
+# Déclaration du blueprint pour le groupe de routes liées aux livres
 livres_bp = Blueprint('livres', __name__)
 
+# Fonction pour se connecter à la base de données MySQL
 def get_db():
     return mysql.connector.connect(
         host="localhost",
@@ -13,9 +15,10 @@ def get_db():
         database="bibliotheque"
     )
 
+# Page de liste des livres
 @livres_bp.route('/livres')
 def livres():
-    utilisateur = session.get('utilisateur')
+    utilisateur = session.get('utilisateur')  # Vérifie si un utilisateur est connecté
 
     conn = get_db()
     cur = conn.cursor()
@@ -25,10 +28,11 @@ def livres():
 
     return render_template("livres.html", livres=livres, utilisateur=utilisateur)
 
+# Recherche de livres par titre ou auteur
 @livres_bp.route('/recherche')
 def recherche():
     utilisateur = session.get('utilisateur')
-    q = request.args.get('q', '').strip().lower()
+    q = request.args.get('q', '').strip().lower()  # Récupère la requête utilisateur
 
     livres_resultat = []
     if q:
@@ -44,11 +48,12 @@ def recherche():
 
     return render_template("recherche.html", livres=livres_resultat, requete=q, utilisateur=utilisateur)
 
+# Ajout d’un nouveau livre (réservé aux administrateurs)
 @livres_bp.route('/ajouter', methods=['GET', 'POST'])
 def ajouter_livre():
     utilisateur = session.get("utilisateur")
     if not utilisateur or not utilisateur.get("is_admin"):
-        return redirect('/')
+        return redirect('/')  # Redirection si non-admin
 
     if request.method == 'POST':
         titre = request.form['titre']
@@ -68,33 +73,40 @@ def ajouter_livre():
 
     return render_template("ajouter.html")
 
+# Emprunt d’un livre
 @livres_bp.route('/emprunter/<int:livre_id>', methods=['POST'])
 def emprunter(livre_id):
     utilisateur = session.get('utilisateur')
     if not utilisateur:
-        return redirect('/login')
+        return redirect('/login')  # Redirection vers la connexion
 
     conn = get_db()
     cur = conn.cursor()
+
+    # Vérifie si le livre existe et récupère le titre
     cur.execute("SELECT titre FROM livres WHERE id = %s", (livre_id,))
     livre_info = cur.fetchone()
-
     if not livre_info:
         conn.close()
         return redirect('/livres')
 
     titre = livre_info[0]
 
+    # Calcule la date limite d’emprunt (7 jours après la date actuelle)
     date_limite = (datetime.now() + timedelta(days=7)).strftime('%Y-%m-%d')
+
+    # Enregistre l’emprunt dans la base de données
     cur.execute("""
         INSERT INTO emprunts (utilisateur_email, livre_id, date_limite)
         VALUES (%s, %s, %s)
     """, (utilisateur['email'], livre_id, date_limite))
+
+    # Décrémente le nombre d’exemplaires disponibles
     cur.execute("UPDATE livres SET exemplaires = exemplaires - 1 WHERE id = %s", (livre_id,))
     conn.commit()
     conn.close()
 
-    # ✉️ Envoi de l’email
+    # Envoie d’un email de confirmation à l’utilisateur
     sujet = "📚 Confirmation d’emprunt de livre"
     contenu = f"""Bonjour {utilisateur['nom']},
 
@@ -111,6 +123,7 @@ La Bibliothèque
 
     return redirect('/livres')
 
+# Affiche les livres empruntés par l'utilisateur connecté
 @livres_bp.route('/mes_emprunts')
 def mes_emprunts():
     utilisateur = session.get('utilisateur')
@@ -130,6 +143,7 @@ def mes_emprunts():
 
     return render_template("emprunter.html", emprunts=emprunts)
 
+# Traitement du retour d’un livre
 @livres_bp.route('/rendre/<int:emprunt_id>', methods=['POST'])
 def rendre(emprunt_id):
     utilisateur = session.get('utilisateur')
@@ -139,11 +153,16 @@ def rendre(emprunt_id):
     conn = get_db()
     cur = conn.cursor()
 
+    # Récupère l’ID du livre lié à l’emprunt
     cur.execute("SELECT livre_id FROM emprunts WHERE id = %s", (emprunt_id,))
     row = cur.fetchone()
+
     if row:
         livre_id = row[0]
+
+        # Supprime l'emprunt
         cur.execute("DELETE FROM emprunts WHERE id = %s", (emprunt_id,))
+        # Réaugmente le stock du livre
         cur.execute("UPDATE livres SET exemplaires = exemplaires + 1 WHERE id = %s", (livre_id,))
         conn.commit()
 
