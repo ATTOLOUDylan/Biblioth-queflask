@@ -19,7 +19,7 @@ Les utilisateurs peuvent s'inscrire, se connecter, emprunter et rendre des livre
 ---
 
 ## 🗂️ Structure du projet
-
+```plaintext
 bibliotheque/
 ├── app/
 │ ├── init.py # Création de l'app Flask
@@ -36,3 +36,51 @@ bibliotheque/
 ├── run.py # Point d'entrée de l’application
 ├── .env # Variables d’environnement (non suivi par git)
 ├── .gitignore # Fichiers à ignorer par git
+```
+
+
+---
+
+## 🛠️ Installation
+
+1. **Cloner le projet** :
+
+```bash
+git clone https://github.com/ton-utilisateur/bibliotheque.git
+cd bibliotheque
+```
+2.**Créer un environnement virtuel** :
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+3.**Configurer le fichier .env** :
+
+Crée un fichier .env à la racine avec ce contenu :
+```bash
+MAIL_USER=ton_email@gmail.com
+MAIL_PASSWORD=ton_mot_de_passe_application
+```
+> 🔐 **Important :** Utilise un **mot de passe d’application Gmail** (ne jamais utiliser ton mot de passe personnel Gmail).  
+> 👉 [Voir comment créer un mot de passe d’application](https://support.google.com/accounts/answer/185833?hl=fr)
+
+5.**Lancer l'application** :
+```bash
+python run.py
+```
+Puis ouvrir http://127.0.0.1:5000 dans un navigateur.
+
+---
+✅ **Compte admin par défaut**
+
+| Email             | Mot de passe |
+|-------------------|--------------|
+| admin@gmail.com   | admin2005    |
+
+> Il est créé automatiquement au premier lancement s’il n’existe pas.
+
+---
+📄 **Licence**
+
+Ce projet est open-source et publié sous une licence.  
+➡️ Consulte le fichier [`LICENSE`](LICENSE) pour plus de détails.
