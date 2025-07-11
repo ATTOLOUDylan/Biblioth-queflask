@@ -46,8 +46,8 @@ bibliotheque/
 1. **Cloner le projet** :
 
 ```bash
-git clone https://github.com/ton-utilisateur/bibliotheque.git
-cd bibliotheque
+git clone https://github.com/ATTOLOUDylan/Biblioth-queflask.git
+cd Bibliotheque
 ```
 2.**Créer un environnement virtuel** :
 ```bash
