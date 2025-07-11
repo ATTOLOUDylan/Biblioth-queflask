@@ -10,7 +10,7 @@ def envoyer_email(destinataire, sujet, contenu):
 
     try:
         with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login("kennethattolou@gmail.com", "kenneth@2005")  # ⚠️ Mot de passe d'application Gmail
+            smtp.login("kennethattolou@gmail.com", "y z v d c u t d b m z j b i c a")  # ⚠️ Mot de passe d'application Gmail
             smtp.send_message(msg)
         print("✅ Email envoyé à", destinataire)
     except Exception as e:
