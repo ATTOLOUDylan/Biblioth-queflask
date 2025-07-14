@@ -3,14 +3,25 @@ from datetime import datetime, timedelta
 from app.models.db import db, Livre, Emprunt
 from app.models.mail import envoyer_email
 
+# Création du blueprint pour les routes liées aux livres et aux emprunts
 livres_bp = Blueprint('livres', __name__)
 
+# --------------------------------------------------------
+# Route : /livres
+# Affiche la liste de tous les livres disponibles dans la base
+# Accessible à tous les utilisateurs (même non connectés)
+# --------------------------------------------------------
 @livres_bp.route('/livres')
 def livres():
     utilisateur = session.get('utilisateur')
     tous_les_livres = Livre.query.all()
     return render_template("livres.html", livres=tous_les_livres, utilisateur=utilisateur)
 
+# --------------------------------------------------------
+# Route : /recherche?q=...
+# Permet de rechercher un livre par titre ou auteur
+# La recherche est insensible à la casse grâce à ilike()
+# --------------------------------------------------------
 @livres_bp.route('/recherche')
 def recherche():
     utilisateur = session.get('utilisateur')
@@ -24,6 +35,12 @@ def recherche():
 
     return render_template("recherche.html", livres=livres_resultat, requete=q, utilisateur=utilisateur)
 
+# --------------------------------------------------------
+# Route : /ajouter
+# Méthodes : GET, POST
+# Permet aux administrateurs d'ajouter un nouveau livre
+# Redirige vers /livres après l'ajout
+# --------------------------------------------------------
 @livres_bp.route('/ajouter', methods=['GET', 'POST'])
 def ajouter_livre():
     utilisateur = session.get("utilisateur")
@@ -43,6 +60,16 @@ def ajouter_livre():
 
     return render_template("ajouter.html")
 
+# --------------------------------------------------------
+# Route : /emprunter/<livre_id>
+# Méthode : POST uniquement
+# Permet à un utilisateur connecté d'emprunter un livre
+# - Vérifie que le livre existe et qu'il reste des exemplaires
+# - Enregistre l'emprunt avec une date limite de retour (7 jours)
+# - Diminue le stock
+# - Envoie un email de confirmation
+# Redirige vers /livres
+# --------------------------------------------------------
 @livres_bp.route('/emprunter/<int:livre_id>', methods=['POST'])
 def emprunter(livre_id):
     utilisateur = session.get('utilisateur')
@@ -54,7 +81,7 @@ def emprunter(livre_id):
     if not livre or livre.exemplaires <= 0:
         return redirect('/livres')
 
-    # Création de l’emprunt
+    # Création de l’emprunt avec limite à 7 jours
     date_limite = datetime.utcnow().date() + timedelta(days=7)
     emprunt = Emprunt(
         utilisateur_email=utilisateur['email'],
@@ -67,7 +94,7 @@ def emprunter(livre_id):
     livre.exemplaires -= 1
     db.session.commit()
 
-    # Envoi de l’email
+    # Envoi d’un email de confirmation
     sujet = "📚 Confirmation d’emprunt de livre"
     contenu = f"""Bonjour {utilisateur['nom']},
 
@@ -84,6 +111,12 @@ La Bibliothèque
 
     return redirect('/livres')
 
+# --------------------------------------------------------
+# Route : /mes_emprunts
+# Affiche la liste des livres empruntés par l’utilisateur connecté
+# Jointure entre Emprunt et Livre pour afficher les détails
+# Redirige vers /login si l’utilisateur n’est pas connecté
+# --------------------------------------------------------
 @livres_bp.route('/mes_emprunts')
 def mes_emprunts():
     utilisateur = session.get('utilisateur')
@@ -102,6 +135,14 @@ def mes_emprunts():
 
     return render_template("emprunter.html", emprunts=emprunts)
 
+# --------------------------------------------------------
+# Route : /rendre/<emprunt_id>
+# Méthode : POST uniquement
+# Permet à un utilisateur de rendre un livre
+# - Supprime l’emprunt
+# - Incrémente le nombre d'exemplaires disponibles
+# Redirige vers la page /mes_emprunts
+# --------------------------------------------------------
 @livres_bp.route('/rendre/<int:emprunt_id>', methods=['POST'])
 def rendre(emprunt_id):
     utilisateur = session.get('utilisateur')

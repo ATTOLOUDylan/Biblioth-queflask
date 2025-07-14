@@ -3,14 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <title>🔍 Rechercher un livre</title>
+
+  <!-- Responsivité pour mobile -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS pour mise en page et style modernes -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
   <div class="container py-5">
+    
+    <!-- Carte centrée contenant le formulaire et les résultats -->
     <div class="card shadow-sm mx-auto" style="max-width: 700px;">
       <div class="card-body">
+
+        <!-- Titre principal -->
         <h1 class="mb-4 text-center">🔍 Rechercher un livre</h1>
 
         <!-- Formulaire de recherche -->
@@ -19,10 +27,14 @@
           <button class="btn btn-primary" type="submit">Rechercher</button>
         </form>
 
+        <!-- Résultats de recherche (affichés uniquement si la variable 'livres' est définie) -->
         {% if livres is defined %}
+          
+          <!-- Résumé de la recherche -->
           <h5 class="mb-3 text-muted">Résultats pour <em>« {{ requete }} »</em> :</h5>
 
           {% if livres %}
+            <!-- Liste des livres trouvés -->
             <ul class="list-group mb-4">
               {% for livre in livres %}
                 <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -30,6 +42,8 @@
                     <strong>{{ livre.titre }}</strong><br>
                     <small class="text-muted">{{ livre.auteur }} — {{ livre.annee }}</small>
                   </div>
+                  
+                  <!-- Badge indiquant le nombre d'exemplaires -->
                   <span class="badge bg-secondary rounded-pill">
                     {{ livre.exemplaires }} exemplaire{{ 's' if livre.exemplaires > 1 else '' }}
                   </span>
@@ -37,12 +51,15 @@
               {% endfor %}
             </ul>
           {% else %}
+            <!-- Alerte si aucun résultat -->
             <div class="alert alert-warning">
               📭 Aucun résultat trouvé pour <strong>{{ requete }}</strong>.
             </div>
           {% endif %}
+
         {% endif %}
 
+        <!-- Lien retour vers l'accueil -->
         <div class="text-center">
           <a href="{{ url_for('auth.accueil') }}" class="btn btn-outline-secondary mt-3">⬅ Retour à l’accueil</a>
         </div>
@@ -50,6 +67,7 @@
     </div>
   </div>
 
+  <!-- JS Bootstrap (facultatif pour composants dynamiques comme modales, alertes, etc.) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
