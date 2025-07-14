@@ -1,50 +1,26 @@
-import mysql.connector
+from app import db
+from datetime import datetime
 
-def creer_base():
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="dylan",
-        password="dylan@2005",
-        database="bibliotheque"
-    )
+class Utilisateur(db.Model):
+    __tablename__ = 'utilisateurs'
+    id = db.Column(db.Integer, primary_key=True)
+    nom = db.Column(db.String(255), nullable=False)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    mot_de_passe = db.Column(db.Text, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
 
-    cur = conn.cursor()
+class Livre(db.Model):
+    __tablename__ = 'livres'
+    id = db.Column(db.Integer, primary_key=True)
+    titre = db.Column(db.String(255), nullable=False)
+    auteur = db.Column(db.String(255), nullable=False)
+    annee = db.Column(db.String(4), nullable=False)
+    exemplaires = db.Column(db.Integer, default=1)
 
-    # Table livres
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS livres (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            titre VARCHAR(255) NOT NULL,
-            auteur VARCHAR(255) NOT NULL,
-            annee VARCHAR(4) NOT NULL,
-            exemplaires INT DEFAULT 1
-        )
-    """)
-
-    # Table utilisateurs
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS utilisateurs (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            nom VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
-            mot_de_passe TEXT NOT NULL,
-            is_admin TINYINT DEFAULT 0
-        )
-    """)
-
-    # Table emprunts
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS emprunts (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            utilisateur_email VARCHAR(255) NOT NULL,
-            livre_id INT NOT NULL,
-            date_emprunt DATETIME DEFAULT CURRENT_TIMESTAMP,
-            date_limite DATE,
-            FOREIGN KEY (utilisateur_email) REFERENCES utilisateurs(email),
-            FOREIGN KEY (livre_id) REFERENCES livres(id)
-        )
-    """)
-
-    conn.commit()
-    conn.close()
-    print("✅ Base de données MySQL initialisée avec succès.")
+class Emprunt(db.Model):
+    __tablename__ = 'emprunts'
+    id = db.Column(db.Integer, primary_key=True)
+    utilisateur_email = db.Column(db.String(255), db.ForeignKey('utilisateurs.email'))
+    livre_id = db.Column(db.Integer, db.ForeignKey('livres.id'))
+    date_emprunt = db.Column(db.DateTime, default=datetime.utcnow)
+    date_limite = db.Column(db.Date)

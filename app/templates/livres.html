@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>📚 Livres disponibles</title>
- <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
 
@@ -15,7 +15,7 @@
     {% if utilisateur %}
       <p class="alert alert-success">Connecté : <strong>{{ utilisateur.nom }}</strong></p>
     {% else %}
-      <p class="alert alert-warning">🔐 <a href="/login">Connectez-vous</a> pour emprunter un livre.</p>
+      <p class="alert alert-warning">🔐 <a href="{{ url_for('auth_bp.login') }}">Connectez-vous</a> pour emprunter un livre.</p>
     {% endif %}
 
     {% if livres %}
@@ -23,13 +23,15 @@
         {% for livre in livres %}
           <li class="list-group-item d-flex justify-content-between align-items-center">
             <div>
-              <strong>{{ livre[1] }}</strong> — {{ livre[2] }} ({{ livre[3] }})
+              <strong>{{ livre.titre }}</strong> — {{ livre.auteur }} ({{ livre.categorie }})
               <br>
-              <small class="text-muted">{{ livre[4] }} exemplaire{{ 's' if livre[4] > 1 else '' }}</small>
+              <small class="text-muted">
+                {{ livre.exemplaires }} exemplaire{{ 's' if livre.exemplaires > 1 else '' }}
+              </small>
             </div>
 
-            {% if utilisateur and livre[4] > 0 %}
-              <form action="{{ url_for('livres.emprunter', livre_id=livre[0]) }}" method="post" class="mb-0">
+            {% if utilisateur and livre.exemplaires > 0 %}
+              <form action="{{ url_for('livres.emprunter', livre_id=livre.id) }}" method="post" class="mb-0">
                 <button type="submit" class="btn btn-sm btn-outline-primary">📥 Emprunter</button>
               </form>
             {% endif %}
@@ -41,7 +43,7 @@
     {% endif %}
 
     <div class="mt-4">
-      <a href="/" class="btn btn-secondary">⬅ Retour à l’accueil</a>
+      <a href="{{ url_for('auth.accueil') }}" class="btn btn-secondary">⬅ Retour à l’accueil</a>
     </div>
   </div>
 

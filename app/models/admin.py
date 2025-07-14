@@ -1,45 +1,27 @@
-import mysql.connector
+from app import db
+from app.models.db import Utilisateur
 
-# Fonction pour créer un compte administrateur si aucun n'existe
-# Basé sur le flag 'is_admin' dans la table utilisateurs
-
+# Fonction pour créer un compte administrateur par défaut
 def creer_admin():
     """
-    Crée un compte admin SEULEMENT s'il n'en existe aucun (is_admin = 1).
-    Peu importe son email ou mot de passe.
+    Crée un compte admin SEULEMENT s'il n'en existe aucun (is_admin = True).
     """
-    # Informations par défaut pour l'administrateur
     email_admin = "admin@gmail.com"
     mot_de_passe_admin = "admin2005"
     nom_admin = "Admin"
 
-    # Connexion à la base MySQL
-    conn = mysql.connector.connect(
-        host="localhost",
-        user="dylan",
-        password="dylan@2005",
-        database="bibliotheque"
-    )
-    cur = conn.cursor()
+    # Vérifie s'il existe déjà un administrateur
+    admin_existant = Utilisateur.query.filter_by(is_admin=True).first()
 
-    # Vérifier s'il existe déjà un utilisateur avec is_admin = 1
-    cur.execute("SELECT id, email FROM utilisateurs WHERE is_admin = 1 LIMIT 1")
-    admin_existant = cur.fetchone()
-
-    # Si un admin existe, ne rien faire (évite doublon)
     if admin_existant:
-        print(f"ℹ️ Un administrateur existe déjà (email : {admin_existant[1]})")
+        print(f"ℹ️ Un administrateur existe déjà (email : {admin_existant.email})")
     else:
-        # Sinon, insérer le nouvel admin avec le flag is_admin à 1
-        cur.execute(
-            """
-            INSERT INTO utilisateurs (nom, email, mot_de_passe, is_admin)
-            VALUES (%s, %s, %s, 1)
-            """,
-            (nom_admin, email_admin, mot_de_passe_admin)
+        nouvel_admin = Utilisateur(
+            nom=nom_admin,
+            email=email_admin,
+            mot_de_passe=mot_de_passe_admin,
+            is_admin=True
         )
-        conn.commit()
+        db.session.add(nouvel_admin)
+        db.session.commit()
         print(f"✅ Admin créé : {email_admin} / {mot_de_passe_admin}")
-
-    # Fermer la connexion
-    conn.close()
